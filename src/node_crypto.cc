@@ -121,7 +121,7 @@ static X509_NAME *cnnic_ev_name =
 static uv_mutex_t* locks;
 
 const char* const root_certs[] = {
-#include "node_root_certs.h"  // NOLINT(build/include_order)
+  NULL
 };
 
 X509_STORE* root_cert_store;
@@ -750,29 +750,17 @@ void SecureContext::AddRootCerts(const FunctionCallbackInfo<Value>& args) {
   CHECK_EQ(sc->ca_store_, nullptr);
 
   if (!root_cert_store) {
-    root_cert_store = X509_STORE_new();
-
-    for (size_t i = 0; i < arraysize(root_certs); i++) {
-      BIO* bp = NodeBIO::NewFixed(root_certs[i], strlen(root_certs[i]));
-      if (bp == nullptr) {
-        return;
-      }
-
-      X509 *x509 = PEM_read_bio_X509(bp, nullptr, CryptoPemCallback, nullptr);
-      if (x509 == nullptr) {
-        BIO_free_all(bp);
-        return;
-      }
-
-      X509_STORE_add_cert(root_cert_store, x509);
-
-      BIO_free_all(bp);
-      X509_free(x509);
+    if (SSL_CTX_load_verify_locations(sc->ctx_, "/etc/pki/tls/certs/ca-bundle.crt", NULL) == 1) {
+      root_cert_store = SSL_CTX_get_cert_store(sc->ctx_);
+    } else {
+      // empty store
+      root_cert_store = X509_STORE_new();
     }
+  } else {
+    SSL_CTX_set_cert_store(sc->ctx_, root_cert_store); 
   }
 
   sc->ca_store_ = root_cert_store;
-  SSL_CTX_set_cert_store(sc->ctx_, sc->ca_store_);
 }
 
 

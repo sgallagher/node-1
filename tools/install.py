@@ -121,26 +121,23 @@ def subdir_files(path, dest, action):
 
 def files(action):
   is_windows = sys.platform == 'win32'
-  output_file = 'node'
   output_prefix = 'out/Release/'
+  output_libprefix = output_prefix
 
-  if 'false' == variables.get('node_shared'):
-    if is_windows:
-      output_file += '.exe'
+  if is_windows:
+    output_bin = 'node.exe'
+    output_lib = 'node.dll'
   else:
-    if is_windows:
-      output_file += '.dll'
-    else:
-      output_file = 'lib' + output_file + '.' + variables.get('shlib_suffix')
-      # GYP will output to lib.target except on OS X, this is hardcoded
-      # in its source - see the _InstallableTargetInstallPath function.
-      if sys.platform != 'darwin':
-        output_prefix += 'lib.target/'
+    output_bin = 'node'
+    output_lib = 'libnode.' + variables.get('shlib_suffix')
+    # GYP will output to lib.target except on OS X, this is hardcoded
+    # in its source - see the _InstallableTargetInstallPath function.
+    if sys.platform != 'darwin':
+      output_libprefix += 'lib.target/'
 
-  if 'false' == variables.get('node_shared'):
-    action([output_prefix + output_file], 'bin/' + output_file)
-  else:
-    action([output_prefix + output_file], 'lib/' + output_file)
+  action([output_prefix + output_bin], 'bin/' + output_bin)
+  if 'true' == variables.get('node_shared'):
+    action([output_libprefix + output_lib], variables.get('libdir') + '/' + output_lib)
 
   if 'true' == variables.get('node_use_dtrace'):
     action(['out/Release/node.d'], 'lib/dtrace/node.d')

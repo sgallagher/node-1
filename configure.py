@@ -556,6 +556,12 @@ parser.add_option('--shared',
     help='compile shared library for embedding node in another project. ' +
          '(This mode is not officially supported for regular applications)')
 
+parser.add_option('--libdir',
+    action='store',
+    dest='libdir',
+    default='lib',
+    help='a directory to install the shared library into')
+
 parser.add_option('--without-v8-platform',
     action='store_true',
     dest='without_v8_platform',
@@ -1095,6 +1101,7 @@ def configure_node(o):
   if o['variables']['want_separate_host_toolset'] == 0:
     o['variables']['node_code_cache'] = 'yes' # For testing
   o['variables']['node_shared'] = b(options.shared)
+  o['variables']['libdir'] = options.libdir
   node_module_version = getmoduleversion.get_version()
 
   if sys.platform == 'darwin':
